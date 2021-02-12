@@ -33,4 +33,4 @@ EXPOSE 9080
 WORKDIR /opt/microservices
 RUN python -m unittest discover
 
-CMD ["python", "productpage.py", "9080"]
+CMD ["python", "productpage.py", "8080"]

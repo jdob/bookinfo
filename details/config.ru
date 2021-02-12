@@ -1,3 +1,4 @@
+require 'json'
 require 'rack/lobster'
 
 map '/health' do

@@ -26,7 +26,9 @@ end
 
 map '/details' do
   details = proc do |env|
-    [200, { "Content-Type" => "text/json" }, {
+    req = Rack::Request.new(env)
+    [200, { "Content-Type" => "text/json" }, [{
+      'id' => req.params[:id],
       'author': 'William Shakespeare',
       'year': 1595,
       'type' => 'paperback',
@@ -34,8 +36,8 @@ map '/details' do
       'publisher' => 'PublisherA',
       'language' => 'English',
       'ISBN-10' => '1234567890',
-      'ISBN-13' => '123-1234567890'
-    }]
+      'ISBN-13' => '123-1234567890'}.to_json]
+    ]
   end
   run details
 end

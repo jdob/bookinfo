@@ -65,7 +65,7 @@ reviewsHostname = "reviews" if (os.environ.get("REVIEWS_HOSTNAME") is None) else
 flood_factor = 0 if (os.environ.get("FLOOD_FACTOR") is None) else int(os.environ.get("FLOOD_FACTOR"))
 
 details = {
-    "name": "http://{0}{1}:9080".format(detailsHostname, servicesDomain),
+    "name": "http://{0}{1}:8080".format(detailsHostname, servicesDomain),
     "endpoint": "details",
     "children": []
 }
@@ -418,13 +418,8 @@ class Writer(object):
         self.file.flush()
 
 
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        logging.error("usage: %s port" % (sys.argv[0]))
-        sys.exit(-1)
-
-    p = int(sys.argv[1])
-    logging.info("start at port %s" % (p))
-    # Python does not work on an IPv6 only host
-    # https://bugs.python.org/issue10414
-    app.run(host='0.0.0.0', port=p, debug=True, threaded=True)
+p = 8080
+print("starting on port %s" % (p))
+# Python does not work on an IPv6 only host
+# https://bugs.python.org/issue10414
+app.run(host='0.0.0.0', port=p, debug=True, threaded=True)

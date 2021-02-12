@@ -18,12 +18,12 @@ require 'webrick'
 require 'json'
 require 'net/http'
 
-if ARGV.length < 1 then
-    puts "usage: #{$PROGRAM_NAME} port"
-    exit(-1)
-end
+#if ARGV.length < 1 then
+#    puts "usage: #{$PROGRAM_NAME} port"
+#    exit(-1)
+#end
 
-port = Integer(ARGV[0])
+port = 8080
 
 server = WEBrick::HTTPServer.new :BindAddress => '*', :Port => port
 

@@ -6,6 +6,9 @@ ComponentSettings:
   SourceType: local
   Ports:
   - 8080/TCP
-  Application: productpage
-  Project: user1-bookinfo
-  Name: python-productpage
+  Application: app
+  Project: bookinfo1
+  Name: productpage
+  Url:
+  - Name: productpage-8080
+    Port: 8080

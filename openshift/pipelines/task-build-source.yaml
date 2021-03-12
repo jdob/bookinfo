@@ -1,0 +1,33 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-app
+spec:
+  workspaces:
+    - name: source-dir
+  steps:
+    - name: clean
+      image: docker.io/gradle:latest
+      workingDir: "$(workspaces.source-dir.path)/reviews/reviews-application"
+      command:
+      - gradle
+      args:
+      - clean
+    - name: build-sources
+      image: docker.io/gradle:latest
+      workingDir: "$(workspaces.source-dir.path)/reviews/reviews-application"
+      command:
+        - gradle
+      args:
+        - build
+    - name: build-war
+      image: docker.io/gradle:latest
+      workingDir: "$(workspaces.source-dir.path)/reviews/reviews-wlpcfg"
+      command:
+        - gradle
+      args:
+        - build
+    - name: ls-built
+      image: busybox
+      command: ["ls", "-ltr", "$(workspaces.source-dir.path)/reviews/reviews-wlpcfg/servers/LibertyProjectServer/apps"]

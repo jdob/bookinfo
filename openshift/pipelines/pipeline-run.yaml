@@ -1,0 +1,13 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: reviews-pipeline-
+spec:
+  serviceAccountName: pipeline
+  pipelineRef:
+    name: reviews
+  workspaces:
+  - name: reviews-ws
+    persistentVolumeClaim:
+      claimName: reviews-pvc

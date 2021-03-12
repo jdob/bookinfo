@@ -1,0 +1,84 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: reviews
+spec:
+  workspaces:
+    - name: reviews-ws
+  params:
+    - name: image-name
+      type: string
+      default: "image-registry.openshift-image-registry.svc:5000/pipe2/reviews"
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: reviews-ws
+      params:
+        - name: url
+          value: https://github.com/jdob/bookinfo
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: master
+    - name: list-source
+      taskRef:
+        name: list-source
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source-dir
+          workspace: reviews-ws
+    - name: build-application
+      taskRef:
+        name: build-app
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source-dir
+          workspace: reviews-ws
+    - name: build-image
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: TLSVERIFY
+          value: "false"
+        - name: IMAGE
+          value: $(params.image-name)
+        - name: CONTEXT
+          value: "reviews/reviews-wlpcfg"
+      workspaces:
+        - name: source
+          workspace: reviews-ws
+      runAfter:
+        - build-application
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: reviews-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: reviews-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,12 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: list-source
+spec:
+  workspaces:
+    - name: source-dir
+  steps:
+    - name: ls-build-sources
+      image: busybox
+      command: ["ls", "-ltr", "$(workspaces.source-dir.path)"]

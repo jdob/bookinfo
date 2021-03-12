@@ -24,5 +24,5 @@ spec:
       command: ["/usr/bin/cat", "$(workspaces.source-dir.path)/openshift/reviews.yaml"]
     - name: apply
       image: quay.io/openshift/origin-cli:4.7
-      workingDir: $(workspaces.source-dir.path)/openshift)
-      command: ["/usr/bin/oc", "oc", "apply", "-f", "reviews.yaml"]
+      workingDir: $(workspaces.source-dir.path)/openshift
+      command: ["/usr/bin/oc", "apply", "-f", "reviews.yaml"]

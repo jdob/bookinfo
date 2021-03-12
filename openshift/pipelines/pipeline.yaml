@@ -59,6 +59,17 @@ spec:
           workspace: reviews-ws
       runAfter:
         - build-application
+    - name: deploy
+      taskRef:
+        name: deploy
+      params:
+        - name: image-name
+          value: $(params.image-name)
+      workspaces:
+        - name: source-dir
+          workspace: reviews-ws
+      runAfter:
+        - build-image
 ---
 apiVersion: v1
 kind: PersistentVolume

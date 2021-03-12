@@ -1,0 +1,28 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy
+spec:
+  workspaces:
+    - name: source-dir
+  params:
+    - name: image-name
+      type: string
+  steps:
+    - name: update-image-name
+      image: quay.io/openshift/origin-cli:4.7
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          echo "Original: $(inputs.params.image-name)"
+          Y=$(printf '%s\n' "$(inputs.params.image-name)" | sed -e 's/[\/&]/\\&/g')
+          echo "Clean: $Y"
+          sed -i 's/quay.io\/jdob\/bookinfo-reviews:1.1/$Y/' $(workspaces.source-dir.path)/openshift/reviews.yaml
+    - name: cat-manifest
+      image: quay.io/openshift/origin-cli:4.7
+      command: ["/usr/bin/cat", "$(workspaces.source-dir.path)/openshift/reviews.yaml"]
+    - name: apply
+      image: quay.io/openshift/origin-cli:4.7
+      workingDir: $(workspaces.source-dir.path)/openshift)
+      command: ["/usr/bin/oc", "oc", "apply", "-f", "reviews.yaml"]

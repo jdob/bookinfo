@@ -3,32 +3,32 @@ kind: Service
 metadata:
   name: reviews
   labels:
-    app: app
+    app: bookinfo
     service: reviews
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: app
+    app: bookinfo
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: reviews
   labels:
-    app: app
-    app.kubernetes.io/part-of: app
+    app: bookinfo
+    app.kubernetes.io/part-of: bookinfo
     app.openshift.io/runtime: java
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: app
+      app: bookinfo
   template:
     metadata:
       labels:
-        app: app
+        app: bookinfo
         version: v1
         app.openshift.io/runtime: java
     spec:

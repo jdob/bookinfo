@@ -1,0 +1,156 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-app
+spec:
+  workspaces:
+    - name: source-dir
+  steps:
+    - name: clean
+      image: docker.io/gradle:latest
+      workingDir: "$(workspaces.source-dir.path)/reviews/reviews-application"
+      command:
+      - gradle
+      args:
+      - clean
+    - name: build-sources
+      image: docker.io/gradle:latest
+      workingDir: "$(workspaces.source-dir.path)/reviews/reviews-application"
+      command:
+        - gradle
+      args:
+        - build
+    - name: build-war
+      image: docker.io/gradle:latest
+      workingDir: "$(workspaces.source-dir.path)/reviews/reviews-wlpcfg"
+      command:
+        - gradle
+      args:
+        - build
+    - name: ls-built
+      image: busybox
+      command: ["ls", "-ltr", "$(workspaces.source-dir.path)/reviews/reviews-wlpcfg/servers/LibertyProjectServer/apps"]
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy
+spec:
+  workspaces:
+    - name: source-dir
+  params:
+    - name: image-name
+      type: string
+  steps:
+    - name: update-image-name
+      image: quay.io/openshift/origin-cli:4.7
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          echo "Original: $(inputs.params.image-name)"
+          Y=$(printf '%s\n' "$(inputs.params.image-name)" | sed -e 's/[\/&]/\\&/g')
+          echo "Clean: $Y"
+          sed -i "s/quay.io\/jdob\/bookinfo-reviews:1.1/$Y/" $(workspaces.source-dir.path)/openshift/reviews.yaml
+    - name: cat-manifest
+      image: quay.io/openshift/origin-cli:4.7
+      command: ["/usr/bin/cat", "$(workspaces.source-dir.path)/openshift/reviews.yaml"]
+    - name: apply
+      image: quay.io/openshift/origin-cli:4.7
+      workingDir: $(workspaces.source-dir.path)/openshift
+      command: ["/usr/bin/oc", "apply", "-f", "reviews.yaml"]
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: list-source
+spec:
+  workspaces:
+    - name: source-dir
+  steps:
+    - name: ls-build-sources
+      image: busybox
+      command: ["ls", "-ltr", "$(workspaces.source-dir.path)"]
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: reviews
+spec:
+  workspaces:
+    - name: reviews-ws
+  params:
+    - name: image-name
+      type: string
+      default: "image-registry.openshift-image-registry.svc:5000/bookinfo/reviews"
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: reviews-ws
+      params:
+        - name: url
+          value: https://github.com/jdob/bookinfo
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: master
+    - name: list-source
+      taskRef:
+        name: list-source
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source-dir
+          workspace: reviews-ws
+    - name: build-application
+      taskRef:
+        name: build-app
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source-dir
+          workspace: reviews-ws
+    - name: build-image
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: TLSVERIFY
+          value: "false"
+        - name: IMAGE
+          value: $(params.image-name)
+        - name: CONTEXT
+          value: "reviews/reviews-wlpcfg"
+      workspaces:
+        - name: source
+          workspace: reviews-ws
+      runAfter:
+        - build-application
+    - name: deploy
+      taskRef:
+        name: deploy
+      params:
+        - name: image-name
+          value: $(params.image-name)
+      workspaces:
+        - name: source-dir
+          workspace: reviews-ws
+      runAfter:
+        - build-image
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: reviews-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -9,7 +9,7 @@ spec:
   params:
     - name: image-name
       type: string
-      default: "image-registry.openshift-image-registry.svc:5000/pipe2/reviews"
+      default: "image-registry.openshift-image-registry.svc:5000/bookinfo/reviews"
   tasks:
     - name: fetch-repository
       taskRef:
